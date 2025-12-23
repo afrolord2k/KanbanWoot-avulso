@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Teste API Chatwoot</title>
+</head>
+<body>
+    <h1>Teste API Chatwoot</h1>
+    <button onclick="testarAPI()">Testar API</button>
+    <pre id="resultado"></pre>
+
+    <script>
+        async function testarAPI() {
+            const resultado = document.getElementById('resultado');
+            resultado.textContent = 'Carregando...';
+
+            try {
+                const response = await fetch('http://195.35.19.73:30080/api/v1/accounts/1/custom_attribute_definitions', {
+                    headers: {
+                        'api_access_token': '0f357dadc5333700fae0895dbb1b1c2f601ca81f8bf2818653255765506d9cab'
+                    }
+                });
+
+                console.log('Status:', response.status);
+                console.log('Headers:', [...response.headers.entries()]);
+
+                const data = await response.json();
+                console.log('Data:', data);
+
+                resultado.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                console.error('Erro:', error);
+                resultado.textContent = 'Erro: ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>

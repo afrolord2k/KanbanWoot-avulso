@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  kanbanwoot-dev:
+    image: node:18-alpine
+    container_name: kanbanwoot-dev
+    restart: always
+    working_dir: /app
+    ports:
+      - "3005:3000"
+    environment:
+      # Server
+      - HOST=0.0.0.0
+      - PORT=3000
+
+      # Chatwoot API
+      - REACT_APP_CHATWOOT_URL=http://195.35.19.73:30080
+      - REACT_APP_CHATWOOT_ACCOUNT_ID=1
+      - REACT_APP_CHATWOOT_TOKEN=0f357dadc5333700fae0895dbb1b1c2f601ca81f8bf2818653255765506d9cab
+      - REACT_APP_DEBUG=true
+
+      # React Dev Server
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
+    volumes:
+      # Montar código para hot reload
+      - ./:/app
+      # Cache de node_modules (performance)
+      - kanbanwoot-node-modules:/app/node_modules
+    command: sh -c "npm install && npm start"
+    networks:
+      - kanbanwoot-dev-network
+
+networks:
+  kanbanwoot-dev-network:
+    driver: bridge
+
+volumes:
+  kanbanwoot-node-modules:

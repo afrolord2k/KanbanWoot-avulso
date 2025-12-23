@@ -1,0 +1,95 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kanbanwoot
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kanbanwoot-config
+  namespace: kanbanwoot
+data:
+  REACT_APP_CHATWOOT_URL: "http://195.35.19.73:30080"
+  REACT_APP_CHATWOOT_ACCOUNT_ID: "1"
+  REACT_APP_DEBUG: "false"
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: kanbanwoot-secret
+  namespace: kanbanwoot
+type: Opaque
+stringData:
+  REACT_APP_CHATWOOT_TOKEN: "0f357dadc5333700fae0895dbb1b1c2f601ca81f8bf2818653255765506d9cab"
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kanbanwoot
+  namespace: kanbanwoot
+  labels:
+    app: kanbanwoot
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kanbanwoot
+  template:
+    metadata:
+      labels:
+        app: kanbanwoot
+    spec:
+      containers:
+      - name: kanbanwoot
+        image: kanbanwoot:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 3000
+          name: http
+        envFrom:
+        - configMapRef:
+            name: kanbanwoot-config
+        - secretRef:
+            name: kanbanwoot-secret
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 10
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 5
+          periodSeconds: 10
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kanbanwoot
+  namespace: kanbanwoot
+  labels:
+    app: kanbanwoot
+spec:
+  type: NodePort
+  ports:
+  - port: 80
+    targetPort: 3000
+    nodePort: 30305
+    protocol: TCP
+    name: http
+  selector:
+    app: kanbanwoot

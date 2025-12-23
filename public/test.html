@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Teste API Chatwoot</title>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        pre { background: #f5f5f5; padding: 10px; overflow: auto; }
+        .error { color: red; }
+        .success { color: green; }
+    </style>
+</head>
+<body>
+    <h1>Teste API Chatwoot - KanbanWoot</h1>
+    <button onclick="testarAtributos()">1. Testar Custom Attributes</button>
+    <button onclick="testarContatos()">2. Testar Contatos</button>
+    <button onclick="testarTudo()">3. Testar Tudo</button>
+    <hr>
+    <div id="resultado"></div>
+
+    <script>
+        const API_URL = 'http://195.35.19.73:30080';
+        const ACCOUNT_ID = '1';
+        const TOKEN = '0f357dadc5333700fae0895dbb1b1c2f601ca81f8bf2818653255765506d9cab';
+
+        async function testarAtributos() {
+            log('🔍 Testando Custom Attributes...');
+            try {
+                const response = await fetch(`${API_URL}/api/v1/accounts/${ACCOUNT_ID}/custom_attribute_definitions`, {
+                    headers: { 'api_access_token': TOKEN }
+                });
+
+                log(`Status: ${response.status}`, response.ok ? 'success' : 'error');
+
+                const data = await response.json();
+                log('Resposta:', 'success');
+                log(JSON.stringify(data, null, 2));
+
+                const listAttrs = data.filter(attr =>
+                    attr.attribute_model === 'contact_attribute' &&
+                    attr.attribute_display_type === 'list'
+                );
+
+                log(`✅ Encontrados ${listAttrs.length} atributos do tipo lista:`, 'success');
+                listAttrs.forEach(attr => {
+                    log(`  - ${attr.attribute_display_name} (${attr.attribute_key})`, 'success');
+                    log(`    Valores: ${attr.attribute_values.join(', ')}`, 'success');
+                });
+
+            } catch (error) {
+                log(`❌ ERRO: ${error.message}`, 'error');
+                console.error(error);
+            }
+        }
+
+        async function testarContatos() {
+            log('🔍 Testando Contatos...');
+            try {
+                const response = await fetch(`${API_URL}/api/v1/accounts/${ACCOUNT_ID}/contacts`, {
+                    headers: { 'api_access_token': TOKEN }
+                });
+
+                log(`Status: ${response.status}`, response.ok ? 'success' : 'error');
+
+                const data = await response.json();
+                const contacts = data.payload || data || [];
+
+                log(`✅ Encontrados ${contacts.length} contatos`, 'success');
+                contacts.forEach(contact => {
+                    log(`  - ${contact.name} (${contact.email})`, 'success');
+                    if (contact.custom_attributes) {
+                        log(`    Atributos: ${JSON.stringify(contact.custom_attributes)}`, 'success');
+                    }
+                });
+
+            } catch (error) {
+                log(`❌ ERRO: ${error.message}`, 'error');
+                console.error(error);
+            }
+        }
+
+        async function testarTudo() {
+            document.getElementById('resultado').innerHTML = '';
+            await testarAtributos();
+            log('---');
+            await testarContatos();
+        }
+
+        function log(msg, type = '') {
+            const div = document.getElementById('resultado');
+            const p = document.createElement('pre');
+            p.className = type;
+            p.textContent = msg;
+            div.appendChild(p);
+        }
+
+        // Testar ao carregar a página
+        window.onload = () => {
+            log('✨ Página carregada! Clique nos botões acima para testar.');
+            log(`API URL: ${API_URL}`);
+            log(`Account ID: ${ACCOUNT_ID}`);
+            log(`Token: ***${TOKEN.slice(-6)}`);
+        };
+    </script>
+</body>
+</html>
