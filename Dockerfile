@@ -8,10 +8,11 @@ ENV GENERATE_SOURCEMAP=false
 RUN npm run build:clean
 
 # production stage
-FROM node:18-alpine as production
+FROM nginx:stable as production
 
-RUN apk add --no-cache nginx
-RUN mkdir -p /usr/share/nginx/html /run/nginx /app/kanban-api
+RUN apt-get update -qq && apt-get install -y nodejs npm -qq
+
+RUN mkdir -p /app/kanban-api
 
 COPY --from=build /app/build /usr/share/nginx/html
 COPY ./dockerizer/nginx.conf /etc/nginx/conf.d/default.conf
