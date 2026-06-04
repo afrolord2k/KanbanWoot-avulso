@@ -4,26 +4,35 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 COPY . .
-# Build sem minificação agressiva para preservar código de detecção de Account ID
 ENV GENERATE_SOURCEMAP=false
 RUN npm run build:clean
 
 # production stage
-FROM nginx:stable as production
+FROM node:18-alpine as production
 
-# Copia os arquivos do build React
+# Instalar nginx
+RUN apk add --no-cache nginx
+
+# Criar diretórios necessários
+RUN mkdir -p /usr/share/nginx/html /run/nginx /app/kanban-api
+
+# Copiar build do React
 COPY --from=build /app/build /usr/share/nginx/html
 
-# Copia a configuração customizada do nginx
+# Copiar configuração do nginx
 COPY ./dockerizer/nginx.conf /etc/nginx/conf.d/default.conf
 
-# Copia o script de entrypoint que injeta variáveis de ambiente
+# Copiar entrypoint
 COPY ./dockerizer/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-# Expõe a porta usada pelo nginx
+# Copiar e instalar a Kanban API
+COPY ./kanban-api/server.js /app/kanban-api/server.js
+WORKDIR /app/kanban-api
+RUN echo '{"name":"kanban-api","version":"1.0.0","main":"server.js"}' > package.json \
+  && npm install pg --save --quiet
+
+WORKDIR /
 EXPOSE 3000
 
-# Usa o script de entrypoint para iniciar o container
 ENTRYPOINT ["/entrypoint.sh"]
-#CMD ["nginx", "-g", "daemon off;"] 
